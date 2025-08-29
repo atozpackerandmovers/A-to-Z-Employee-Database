@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A to Z Packers & Movers — Fault → Solution App (No-CDN, Single File)</title>
+
+<style>
+  :root{
+    --brand:#1e3a8a; --olive:#556B2F; --accent:#f59e0b; --bg:#f6f7fb; --ink:#0f172a;
+    --muted:#64748b; --line:#e2e8f0; --white:#ffffff; --green:#16a34a; --amber:#d97706;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1100px;margin:0 auto;padding:12px}
+  header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
+  .hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0}
+  .logo{display:flex;align-items:center;gap:10px}
+  .badge{width:36px;height:36px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
+  .title h1{margin:0;font-size:16px;font-weight:700}
+  .title p{margin:0;color:var(--muted);font-size:12px}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .btn:disabled{opacity:.6;cursor:not-allowed}
+  nav .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 0 10px}
+  .tab{padding:10px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+  .grid{display:grid;gap:12px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media (max-width:800px){.g2{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit}
+  textarea{resize:vertical}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .right{margin-left:auto}
+  .chip{display:inline-block;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;background:#fff}
+  .muted{color:var(--muted)} .mono{font-family:ui-monospace,Consolas,monospace}
+  .kpis{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}
+  @media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:520px){.kpis{grid-template-columns:1fr}}
+  .kpi .big{font-size:28px;font-weight:800}
+  .tag{display:inline-block;background:#eef2ff;color:#1e1b4b;border-radius:8px;padding:3px 8px;font-size:12px;margin:2px}
+  .list{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .actions .btn{font-size:12px}
+  .hidden{display:none !important}
+  footer{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="hrow">
+      <div class="logo">
+        <div class="badge">A-Z</div>
+        <div class="title">
+          <h1>Fault → Solution (A to Z Packers & Movers)</h1>
+          <p>Log every fault. Attach a solution. Learn daily.</p>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btnExport" class="btn">Export JSON</button>
+        <label class="btn">
+          <input id="importFile" type="file" accept="application/json" style="display:none"> Import
+        </label>
+        <a id="waQuick" class="btn primary" href="#">WhatsApp Boss</a>
+      </div>
+    </div>
+    <nav>
+      <div class="tabs">
+        <button class="tab active" data-tab="report">Report Fault</button>
+        <button class="tab" data-tab="library">Solution Library</button>
+        <button class="tab" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="sops">SOP Builder</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <!-- REPORT -->
+  <section id="tab-report">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0;font-size:18px">Log a Fault</h2>
+        <div class="muted mono">Auto ID: <span id="nextId"></span></div>
+      </div>
+
+      <div class="grid g2">
+        <div><label>Date</label><input id="date" type="date"></div>
+        <div>
+          <label>Category</label>
+          <select id="category">
+            <option>Operations</option><option>Customer</option><option>Technical</option>
+            <option>Vehicle</option><option>Staff</option><option>Documentation</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Impact</label>
+          <select id="impact"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="status"><option>Pending</option><option>In Progress</option><option>Solved</option><option>Needs Review</option></select>
+        </div>
+
+        <div class="g2" style="grid-column:1/-1">
+          <div style="grid-column:1/-1">
+            <label>Fault Title</label>
+            <input id="title" placeholder="e.g., Vehicle breakdown at NH-16 near Khorda">
+          </div>
+          <div style="grid-column:1/-1">
+            <label>Description</label>
+            <textarea id="desc" rows="3" placeholder="What went wrong? Root cause if known."></textarea>
+          </div>
+        </div>
+
+        <!-- HIDDEN OPTIONAL FIELDS (kept in DOM but not visible) -->
+        <div><label>Job/Tracking ID (optional)</label><input id="tracking" placeholder="AZ-2025-0001"></div>
+        <div><label>Expected Delivery Date (optional)</label><input id="edd" placeholder="YYYY-MM-DD"></div>
+        <div><label>Vehicle No. (optional)</label><input id="vehicle" placeholder="OD 05 BS 8855"></div>
+        <div><label>Driver Name / Phone (optional)</label><input id="driver" placeholder="Sanjay / 9xxxxxxxxx"></div>
+        <div><label>Total Items (optional)</label><input id="items" type="number" min="0" placeholder="45"></div>
+        <div><label>Location (optional)</label><input id="location" placeholder="Cuttack → Berhampur"></div>
+
+        <div style="grid-column:1/-1">
+          <label>Immediate Solution (today)</label>
+          <textarea id="solutionNow" rows="3" placeholder="Action taken now: backup vehicle, customer informed, etc."></textarea>
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Permanent Fix (prevent repeat)</label>
+          <textarea id="solutionFix" rows="3" placeholder="Preventive SOP: service every 5,000 km, 3-layer TV packing SOP, etc."></textarea>
+        </div>
+
+        <div class="row" style="align-items:center">
+          <input id="notifyBoss" type="checkbox">
+          <span class="muted" style="font-size:14px">Send WhatsApp notification to <b>+91 9338888550</b> on Save</span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="btnSave" class="btn primary">Save Fault</button>
+        <button id="btnClear" class="btn">Clear</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h3 style="margin:0;font-size:16px">Recent Faults</h3>
+        <div class="row">
+          <input id="searchFaults" placeholder="Search faults…" />
+          <select id="filterCat">
+            <option value="">All Categories</option>
+            <option>Operations</option><option>Customer</option><option>Technical</option>
+            <option>Vehicle</option><option>Staff</option><option>Documentation</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div id="faultList" class="list"></div>
+    </div>
+  </section>
+
+  <!-- LIBRARY -->
+  <section id="tab-library" class="hidden">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0;font-size:18px">Solution Library</h2>
+        <input id="searchSolutions" placeholder="Search solutions…">
+      </div>
+      <div id="solutionList" class="list"></div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dashboard" class="hidden">
+    <div class="kpis">
+      <div class="card kpi"><div class="muted">Total Faults</div><div id="kpiTotal" class="big">0</div></div>
+      <div class="card kpi"><div class="muted">Solved</div><div id="kpiSolved" class="big" style="color:var(--green)">0</div></div>
+      <div class="card kpi"><div class="muted">Pending/Progress</div><div id="kpiPending" class="big" style="color:var(--amber)">0</div></div>
+      <div class="card kpi"><div class="muted">Top Category</div><div id="kpiTopCat" class="big">—</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:12px">
+      <div class="card">
+        <h3 style="margin:0 0 6px 0;font-size:16px">Category Distribution</h3>
+        <div id="cats"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px 0;font-size:16px">Repeat Faults (Trend)</h3>
+        <div id="trends" class="grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOPs -->
+  <section id="tab-sops" class="hidden">
+    <div class="card">
+      <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0;font-size:18px">SOP Builder</h2>
+        <button id="btnSopExport" class="btn">Export SOP.md</button>
+      </div>
+      <div class="grid g2">
+        <div style="grid-column:1/-1"><label>SOP Title</label><input id="sopTitle" placeholder="Vehicle Breakdown SOP"></div>
+        <div><label>Applies To Category</label>
+          <select id="sopCategory">
+            <option>Operations</option><option>Customer</option><option>Technical</option>
+            <option>Vehicle</option><option>Staff</option><option>Documentation</option><option>Other</option>
+          </select>
+        </div>
+        <div><label>Severity</label><select id="sopSeverity"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+        <div style="grid-column:1/-1"><label>Steps</label><textarea id="sopSteps" rows="5" placeholder="Step-by-step action plan…"></textarea></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnSopSave" class="btn primary">Save SOP</button>
+        <button id="btnSopClear" class="btn">Clear</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3 style="margin:0 0 6px 0;font-size:16px">SOP List</h3>
+      <div id="sopList" class="list"></div>
+    </div>
+  </section>
+</main>
+
+<footer>© <span id="yr"></span> A to Z Packers & Movers — Internal Tool</footer>
+
+<script>
+/* ---------- tiny state ---------- */
+const LS_FAULTS="az_faults_v1_nocdn", LS_SOPS="az_sops_v1_nocdn";
+let faults = load(LS_FAULTS) || [];
+let sops = load(LS_SOPS) || [];
+
+/* ---------- helpers ---------- */
+function load(k){ try{return JSON.parse(localStorage.getItem(k)||"[]")}catch{return []} }
+function save(k,v){ localStorage.setItem(k,JSON.stringify(v)) }
+function uid(){ return "F"+Math.random().toString(36).slice(2,8).toUpperCase() }
+function today(){ const d=new Date(); return d.toISOString().slice(0,10) }
+function chip(t){ return `<span class="chip">${t}</span>` }
+function walink(text){
+  const phone="919338888550";
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
+/* ---------- el ---------- */
+const tabs=[...document.querySelectorAll(".tab")];
+const sections={
+  report:document.getElementById("tab-report"),
+  library:document.getElementById("tab-library"),
+  dashboard:document.getElementById("tab-dashboard"),
+  sops:document.getElementById("tab-sops"),
+};
+const nextIdEl=document.getElementById("nextId");
+const dateEl=document.getElementById("date");
+const categoryEl=document.getElementById("category");
+const impactEl=document.getElementById("impact");
+const statusEl=document.getElementById("status");
+const titleEl=document.getElementById("title");
+const descEl=document.getElementById("desc");
+const trackingEl=document.getElementById("tracking");
+const eddEl=document.getElementById("edd");
+const vehicleEl=document.getElementById("vehicle");
+const driverEl=document.getElementById("driver");
+const itemsEl=document.getElementById("items");
+const locationEl=document.getElementById("location");
+const solutionNowEl=document.getElementById("solutionNow");
+const solutionFixEl=document.getElementById("solutionFix");
+const notifyBossEl=document.getElementById("notifyBoss");
+
+const btnSave=document.getElementById("btnSave");
+const btnClear=document.getElementById("btnClear");
+const faultListEl=document.getElementById("faultList");
+const searchFaultsEl=document.getElementById("searchFaults");
+const filterCatEl=document.getElementById("filterCat");
+
+const searchSolutionsEl=document.getElementById("searchSolutions");
+const solutionListEl=document.getElementById("solutionList");
+
+const kpiTotalEl=document.getElementById("kpiTotal");
+const kpiSolvedEl=document.getElementById("kpiSolved");
+const kpiPendingEl=document.getElementById("kpiPending");
+const kpiTopCatEl=document.getElementById("kpiTopCat");
+const catsEl=document.getElementById("cats");
+const trendsEl=document.getElementById("trends");
+
+const btnExport=document.getElementById("btnExport");
+const importFile=document.getElementById("importFile");
+const waQuick=document.getElementById("waQuick");
+
+const sopTitleEl=document.getElementById("sopTitle");
+const sopCategoryEl=document.getElementById("sopCategory");
+const sopSeverityEl=document.getElementById("sopSeverity");
+const sopStepsEl=document.getElementById("sopSteps");
+const btnSopSave=document.getElementById("btnSopSave");
+const btnSopClear=document.getElementById("btnSopClear");
+const btnSopExport=document.getElementById("btnSopExport");
+const sopListEl=document.getElementById("sopList");
+
+/* ---------- UI funcs ---------- */
+function setNextId(){ nextIdEl.textContent = uid() }
+function clearForm(){
+  dateEl.value=today(); categoryEl.value="Operations"; impactEl.value="Low"; statusEl.value="Pending";
+  titleEl.value=""; descEl.value=""; trackingEl.value=""; eddEl.value=""; vehicleEl.value="";
+  driverEl.value=""; itemsEl.value=""; locationEl.value=""; solutionNowEl.value=""; solutionFixEl.value="";
+  notifyBossEl.checked=false; setNextId();
+}
+
+/* ---------- renders ---------- */
+function renderFaults(){
+  const q=(searchFaultsEl.value||"").toLowerCase().trim();
+  const cat=(filterCatEl.value||"").trim();
+  const list=faults.slice().reverse()
+    .filter(f=>cat?f.category===cat:true)
+    .filter(f=>!q || JSON.stringify(f).toLowerCase().includes(q));
+
+  faultListEl.innerHTML = list.map(f=>`
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="muted mono" style="font-size:12px">${f.date} • <b>${f.id}</b></div>
+          <div style="font-weight:700;margin-top:4px">${f.title||"(No title)"}</div>
+          <div style="margin-top:6px;font-size:14px">${f.desc||""}</div>
+          <div style="margin-top:8px" class="row">
+            ${chip(f.category)} ${chip("Impact: "+f.impact)} ${chip("Status: "+f.status)}
+            ${f.tracking?chip("Tracking: "+f.tracking):""}
+            ${f.vehicle?chip("Vehicle: "+f.vehicle):""}
+            ${f.driver?chip("Driver: "+f.driver):""}
+            ${f.items?chip("Items: "+f.items):""}
+            ${f.location?chip("Route: "+f.location):""}
+            ${f.edd?chip("EDD: "+f.edd):""}
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn action-edit" data-id="${f.id}">Edit</button>
+          <button class="btn action-del" data-id="${f.id}">Delete</button>
+        </div>
+      </div>
+
+      <div class="grid g2" style="margin-top:8px">
+        <div class="card" style="background:#f8fafc">
+          <div class="muted" style="font-size:12px;margin-bottom:4px">Immediate Solution</div>
+          <div style="font-size:14px">${f.solutionNow||"—"}</div>
+        </div>
+        <div class="card" style="background:#f8fafc">
+          <div class="muted" style="font-size:12px;margin-bottom:4px">Permanent Fix</div>
+          <div style="font-size:14px">${f.solutionFix||"—"}</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <a class="btn" target="_blank"
+           href="${walink(`Fault ${f.id}\nTitle: ${f.title}\nCategory: ${f.category}\nImpact: ${f.impact}\nStatus: ${f.status}\nVehicle: ${f.vehicle||"-"}\nDriver: ${f.driver||"-"}\nTracking: ${f.tracking||"-"}\nEDD: ${f.edd||"-"}\nItems: ${f.items||"-"}\nRoute: ${f.location||"-"}\n\nImmediate: ${f.solutionNow||"-"}\nFix: ${f.solutionFix||"-"}`)}">Notify Boss (WA)</a>
+      </div>
+    </div>
+  `).join("") || `<div class="muted">No faults logged yet.</div>`;
+}
+
+function renderSolutions(){
+  const q=(searchSolutionsEl.value||"").toLowerCase().trim();
+  const list=faults.filter(f=>f.solutionNow||f.solutionFix)
+    .map(f=>({id:f.id,title:f.title,category:f.category,impact:f.impact,now:f.solutionNow||"",fix:f.solutionFix||""}))
+    .filter(r=>!q || (r.title?.toLowerCase().includes(q) || r.now.toLowerCase().includes(q) || r.fix.toLowerCase().includes(q)))
+    .sort((a,b)=>a.category.localeCompare(b.category));
+
+  solutionListEl.innerHTML = list.map(r=>`
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="muted" style="font-size:12px">${r.category} • Impact ${r.impact}</div>
+          <div style="font-weight:700;margin-top:4px">${r.title||"Untitled fault"}</div>
+        </div>
+        <a class="btn" target="_blank"
+           href="${walink(`SOLUTION REF (from ${r.id})\nTitle: ${r.title}\nCategory: ${r.category}\nImpact: ${r.impact}\n\nImmediate: ${r.now||"-"}\nFix: ${r.fix||"-"}`)}">Share</a>
+      </div>
+      <div class="grid g2" style="margin-top:8px">
+        <div class="card" style="background:#f8fafc">
+          <div class="muted" style="font-size:12px;margin-bottom:4px">Immediate Solution</div>
+          <div style="font-size:14px">${r.now||"—"}</div>
+        </div>
+        <div class="card" style="background:#f8fafc">
+          <div class="muted" style="font-size:12px;margin-bottom:4px">Permanent Fix</div>
+          <div style="font-size:14px">${r.fix||"—"}</div>
+        </div>
+      </div>
+    </div>
+  `).join("") || `<div class="muted">No solutions yet.</div>`;
+}
+
+function renderDashboard(){
+  const total=faults.length;
+  const solved=faults.filter(f=>f.status==="Solved").length;
+  const pending=faults.filter(f=>["Pending","In Progress","Needs Review"].includes(f.status)).length;
+  kpiTotalEl.textContent=total; kpiSolvedEl.textContent=solved; kpiPendingEl.textContent=pending;
+
+  const catMap={}; faults.forEach(f=>catMap[f.category]=(catMap[f.category]||0)+1);
+  const top=Object.entries(catMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||"—"; kpiTopCatEl.textContent=top;
+  catsEl.innerHTML = Object.entries(catMap).map(([k,v])=>`<span class="tag">${k}: <b>${v}</b></span>`).join("") || `<span class="muted">No data.</span>`;
+
+  const titleMap={}; faults.forEach(f=>{const t=(f.title||"(Untitled)").trim(); titleMap[t]=(titleMap[t]||0)+1;});
+  const rep=Object.entries(titleMap).filter(([,v])=>v>1).sort((a,b)=>b[1]-a[1]);
+  trendsEl.innerHTML = rep.length
+    ? rep.map(([t,v])=>`<div class="row" style="justify-content:space-between"><div>${t}</div><div style="font-weight:700">${v}×</div></div>`).join("")
+    : `<div class="muted">No repeat faults detected yet.</div>`;
+}
+
+function renderSops(){
+  sopListEl.innerHTML = sops.slice().reverse().map(s=>`
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="muted" style="font-size:12px">${s.category} • Severity ${s.severity}</div>
+          <div style="font-weight:700;margin-top:4px">${s.title}</div>
+        </div>
+        <div class="row">
+          <button class="btn sop-edit" data-id="${s.id}">Edit</button>
+          <button class="btn sop-del" data-id="${s.id}">Delete</button>
+        </div>
+      </div>
+      <pre style="white-space:pre-wrap;background:#f8fafc;padding:10px;border-radius:10px;margin-top:8px;font-size:12px">${s.steps}</pre>
+    </div>
+  `).join("") || `<div class="muted">No SOPs yet.</div>`;
+}
+
+/* ---------- actions ---------- */
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+tabs.forEach(b=>{
+  b.addEventListener("click",()=>{
+    tabs.forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    const key=b.getAttribute("data-tab");
+    Object.values(sections).forEach(s=>s.classList.add("hidden"));
+    sections[key].classList.remove("hidden");
+    if(key==="dashboard") renderDashboard();
+  });
+});
+
+function saveFault(rec){
+  faults.push(rec); save(LS_FAULTS,faults);
+  renderFaults(); renderSolutions(); renderDashboard(); setNextId();
+}
+
+btnSave.addEventListener("click",()=>{
+  const rec={
+    id: uid(),
+    date: dateEl.value || today(),
+    category: categoryEl.value,
+    impact: impactEl.value,
+    status: statusEl.value,
+    title: titleEl.value.trim(),
+    desc: descEl.value.trim(),
+    tracking: trackingEl.value.trim(),
+    edd: eddEl.value.trim(),
+    vehicle: vehicleEl.value.trim(),
+    driver: driverEl.value.trim(),
+    items: itemsEl.value ? Number(itemsEl.value) : "",
+    location: locationEl.value.trim(),
+    solutionNow: solutionNowEl.value.trim(),
+    solutionFix: solutionFixEl.value.trim(),
+    ts: Date.now()
+  };
+  saveFault(rec);
+  if(notifyBossEl.checked){
+    const msg = `NEW FAULT ${rec.id}\nTitle: ${rec.title}\nCategory: ${rec.category}\nImpact: ${rec.impact}\nStatus: ${rec.status}\nVehicle: ${rec.vehicle||"-"}\nDriver: ${rec.driver||"-"}\nTracking: ${rec.tracking||"-"}\nEDD: ${rec.edd||"-"}\nItems: ${rec.items||"-"}\nRoute: ${rec.location||"-"}\n\nImmediate: ${rec.solutionNow||"-"}\nFix: ${rec.solutionFix||"-"}`;
+    window.open(walink(msg),"_blank");
+  }
+  alert("Saved.");
+});
+
+btnClear.addEventListener("click",clearForm);
+
+faultListEl.addEventListener("click",(e)=>{
+  const t=e.target;
+  if(t.classList.contains("action-del")){
+    const id=t.getAttribute("data-id");
+    if(confirm("Delete this fault?")){
+      faults=faults.filter(f=>f.id!==id); save(LS_FAULTS,faults);
+      renderFaults(); renderSolutions(); renderDashboard();
+    }
+  }
+  if(t.classList.contains("action-edit")){
+    const id=t.getAttribute("data-id");
+    const f=faults.find(x=>x.id===id); if(!f) return;
+    dateEl.value=f.date; categoryEl.value=f.category; impactEl.value=f.impact; statusEl.value=f.status;
+    titleEl.value=f.title||""; descEl.value=f.desc||""; trackingEl.value=f.tracking||"";
+    eddEl.value=f.edd||""; vehicleEl.value=f.vehicle||""; driverEl.value=f.driver||"";
+    itemsEl.value=f.items||""; locationEl.value=f.location||"";
+    solutionNowEl.value=f.solutionNow||""; solutionFixEl.value=f.solutionFix||"";
+    faults=faults.filter(x=>x.id!==id); save(LS_FAULTS,faults);
+    tabs.forEach(x=>x.classList.remove("active"));
+    document.querySelector('.tab[data-tab="report"]').classList.add("active");
+    Object.values(sections).forEach(s=>s.classList.add("hidden"));
+    sections.report.classList.remove("hidden");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+});
+
+searchFaultsEl.addEventListener("input",renderFaults);
+filterCatEl.addEventListener("change",renderFaults);
+
+searchSolutionsEl.addEventListener("input",renderSolutions);
+
+btnExport.addEventListener("click",()=>{
+  const data={faults,sops,exportedAt:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="az-fault-solution-export.json"; a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+importFile.addEventListener("change",async(e)=>{
+  const file=e.target.files?.[0]; if(!file) return;
+  try{
+    const text=await file.text(); const json=JSON.parse(text);
+    if(Array.isArray(json.faults)) faults=json.faults;
+    if(Array.isArray(json.sops)) sops=json.sops;
+    save(LS_FAULTS,faults); save(LS_SOPS,sops);
+    renderFaults(); renderSolutions(); renderDashboard(); renderSops();
+    alert("Imported.");
+  }catch{ alert("Invalid JSON.") }
+});
+
+/* SOPs */
+btnSopSave.addEventListener("click",()=>{
+  const rec={ id:"S"+Math.random().toString(36).slice(2,8).toUpperCase(),
+    title:sopTitleEl.value.trim()||"Untitled SOP",
+    category:sopCategoryEl.value, severity:sopSeverityEl.value,
+    steps:sopStepsEl.value.trim(), ts:Date.now()
+  };
+  sops.push(rec); save(LS_SOPS,sops); renderSops(); alert("SOP saved.");
+});
+btnSopClear.addEventListener("click",()=>{
+  sopTitleEl.value=""; sopStepsEl.value=""; sopCategoryEl.value="Operations"; sopSeverityEl.value="Low";
+});
+sopListEl.addEventListener("click",(e)=>{
+  const t=e.target;
+  if(t.classList.contains("sop-del")){
+    const id=t.getAttribute("data-id");
+    if(confirm("Delete this SOP?")){
+      sops=sops.filter(x=>x.id!==id); save(LS_SOPS,sops); renderSops();
+    }
+  }
+  if(t.classList.contains("sop-edit")){
+    const id=t.getAttribute("data-id"); const s=sops.find(x=>x.id===id); if(!s) return;
+    sopTitleEl.value=s.title; sopCategoryEl.value=s.category; sopSeverityEl.value=s.severity; sopStepsEl.value=s.steps;
+    sops=sops.filter(x=>x.id!==id); save(LS_SOPS,sops); renderSops();
+    tabs.forEach(x=>x.classList.remove("active"));
+    document.querySelector('.tab[data-tab="sops"]').classList.add("active");
+    Object.values(sections).forEach(s=>s.classList.add("hidden")); sections.sops.classList.remove("hidden");
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+});
+btnSopExport.addEventListener("click",()=>{
+  const md=["# A to Z Packers & Movers — SOPs\n"];
+  sops.sort((a,b)=>a.category.localeCompare(b.category)).forEach(s=>{
+    md.push(`\n## ${s.title}\n- Category: ${s.category}\n- Severity: ${s.severity}\n\n### Steps\n${s.steps}\n`);
+  });
+  const blob=new Blob([md.join("")],{type:"text/markdown"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="AtoZ-SOPs.md"; a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+/* ---------- extra behaviors ---------- */
+// Hide the six optional fields (and their labels)
+function hideOptionalFields(){
+  [trackingEl, eddEl, vehicleEl, driverEl, itemsEl, locationEl].forEach(el=>{
+    if(el){ const box=el.closest('div'); if(box) box.style.display='none'; }
+  });
+}
+// WhatsApp Boss = send ONLY first-screen info (date/category/impact/status/title/description)
+waQuick.addEventListener("click",(e)=>{
+  e.preventDefault();
+  const msg = `FAULT QUICK SHARE\nDate: ${dateEl.value||today()}\nCategory: ${categoryEl.value}\nImpact: ${impactEl.value}\nStatus: ${statusEl.value}\nTitle: ${titleEl.value.trim()||"-"}\nDescription: ${descEl.value.trim()||"-"}`;
+  window.open(walink(msg),"_blank");
+});
+
+/* ---------- boot ---------- */
+function boot(){
+  document.getElementById("yr").textContent=new Date().getFullYear();
+  dateEl.value=today(); setNextId();
+  hideOptionalFields();
+  renderFaults(); renderSolutions(); renderDashboard(); renderSops();
+}
+boot();
+</script>
+
+<script>
+(function () {
+  const waBtn = [...document.querySelectorAll('a,button')].find(el =>
+    /whatsapp boss/i.test(el.textContent || '')
+  );
+  function g(sel) {
+    const el = document.querySelector(sel);
+    return el ? (('value' in el ? el.value : el.textContent) || '').trim() : '';
+  }
+  if (waBtn) {
+    waBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const msg =
+        `FAULT QUICK SHARE\n` +
+        `Date: ${g('#date') || g('input[type="date"]')}\n` +
+        `Category: ${g('#category')}\n` +
+        `Impact: ${g('#impact')}\n` +
+        `Status: ${g('#status')}\n` +
+        `Title: ${g('#title')}\n` +
+        `Description: ${g('#desc')}`;
+      const phone = '919338888550';
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }, true);
+  }
+
+  function hideByLabel(txt) {
+    const lab = [...document.querySelectorAll('label')].find(l =>
+      (l.textContent || '').trim().toLowerCase().includes(txt.toLowerCase())
+    );
+    const box = lab && (lab.closest('div') || lab.parentElement);
+    if (box) box.style.display = 'none';
+  }
+  hideByLabel('Job/Tracking ID');
+  hideByLabel('Expected Delivery Date');
+  hideByLabel('Vehicle No.');
+  hideByLabel('Driver Name');
+  hideByLabel('Total Items');
+  hideByLabel('Location');
+
+  ['YYYY-MM-DD','OD 05 BS 8855','Sanjay','45','Cuttack','AZ-'].forEach(ph => {
+    const el = [...document.querySelectorAll('input,textarea')].find(x =>
+      (x.placeholder || x.value || '').toString().includes(ph)
+    );
+    if (el) (el.closest('div') || el.parentElement).style.display = 'none';
+  });
+
+  [...document.querySelectorAll('img,svg')].forEach(el => {
+    const alt = (el.alt || '').toLowerCase();
+    const cls = (el.className && el.className.toString().toLowerCase()) || '';
+    const st = getComputedStyle(el);
+    if (
+      (alt.includes('logo') || alt.includes('badge') || cls.includes('logo') || cls.includes('badge') || cls.includes('watermark')) &&
+      (st.position === 'fixed' || st.position === 'sticky' || (st.left === '0px' && st.bottom === '0px'))
+    ) {
+      el.style.display = 'none';
+    }
+  });
+})();
+</script>
+</body>
+</html>
